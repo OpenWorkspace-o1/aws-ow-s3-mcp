@@ -10,6 +10,81 @@ import {
 import { S3Client, ListObjectsV2Command, GetObjectCommand, PutObjectCommand, DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
+// Tool definitions
+const LIST_OBJECTS_TOOL: Tool = {
+  name: "list_objects",
+  description: "List objects in an S3 bucket.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      prefix: {
+        type: "string",
+        description: "Prefix filter for object keys."
+      }
+    }
+  }
+};
+
+const GET_OBJECT_TOOL: Tool = {
+  name: "get_object",
+  description: "Generate a pre-signed URL for accessing an object.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      key: {
+        type: "string",
+        description: "Object key to retrieve."
+      },
+      expiry: {
+        type: "number",
+        description: "URL expiration time in seconds (default 1 hour)."
+      }
+    },
+    required: ["key"]
+  }
+};
+
+const PUT_OBJECT_TOOL: Tool = {
+  name: "put_object",
+  description: "Generate a pre-signed URL for uploading an object.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      key: {
+        type: "string",
+        description: "Object key to upload."
+      },
+      expiry: {
+        type: "number",
+        description: "URL expiration time in seconds (default 1 hour)."
+      }
+    },
+    required: ["key"]
+  }
+};
+
+const DELETE_OBJECT_TOOL: Tool = {
+  name: "delete_object",
+  description: "Delete an object from the bucket.",
+  inputSchema: {
+    type: "object",
+    properties: {
+      key: {
+        type: "string",
+        description: "Object key to delete."
+      }
+    },
+    required: ["key"]
+  }
+};
+
+const S3_TOOLS = [
+  LIST_OBJECTS_TOOL,
+  GET_OBJECT_TOOL,
+  PUT_OBJECT_TOOL,
+  DELETE_OBJECT_TOOL,
+] as const;
+
 enum ToolName {
   ListObjects = "list_objects",
   GetObject = "get_object",
@@ -31,22 +106,22 @@ const s3 = new S3Client({
 });
 
 server.setRequestHandler(ListToolsRequestSchema, async () => {
-  return { tools: [ToolName.ListObjects, ToolName.GetObject, ToolName.PutObject, ToolName.DeleteObject] };
+  return { tools: S3_TOOLS };
 });
 
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
-  const { name, params } = request.params;
   const bucketName = process.env.BUCKET_NAME;
   if (!bucketName) {
     throw new McpError(ErrorCode.InvalidRequest, "Bucket name is not set.");
   }
-// https://github.com/modelcontextprotocol/servers/blob/main/src/google-maps/index.ts
+
   try {
-    switch (name) {
+    switch (request.params.name) {
       case ToolName.ListObjects:
+        const { prefix } = request.params.arguments as { prefix?: string };
         const listCommand = new ListObjectsV2Command({
           Bucket: bucketName,
-          Prefix: params.arguments?.prefix as string,
+          Prefix: prefix,
         });
         const listResult = await s3.send(listCommand);
         return {
@@ -60,28 +135,28 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         };
 
       case ToolName.GetObject:
-        if (!params?.key) throw new McpError(ErrorCode.InvalidParams, "Missing object key");
+        const { key, expiry } = request.params.arguments as { key: string; expiry?: number };
         const getCommand = new GetObjectCommand({
           Bucket: bucketName,
-          Key: params.key,
+          Key: key,
         });
-        const url = await getSignedUrl(s3, getCommand, { expiresIn: params?.expiry || 3600 });
+        const url = await getSignedUrl(s3, getCommand, { expiresIn: expiry || 3600 });
         return { result: { object_url: url } };
 
       case ToolName.PutObject:
-        if (!params?.key) throw new McpError(ErrorCode.InvalidParams, "Missing object key");
+        const { key, expiry } = request.params.arguments as { key: string; expiry?: number };
         const putCommand = new PutObjectCommand({
           Bucket: bucketName,
-          Key: params.key,
+          Key: key,
         });
-        const putUrl = await getSignedUrl(s3, putCommand, { expiresIn: params?.expiry || 3600 });
+        const putUrl = await getSignedUrl(s3, putCommand, { expiresIn: expiry || 3600 });
         return { result: { upload_url: putUrl } };
 
       case ToolName.DeleteObject:
-        if (!params?.key) throw new McpError(ErrorCode.InvalidParams, "Missing object key");
+        const { key } = request.params.arguments as { key: string };
         await s3.send(new DeleteObjectCommand({
           Bucket: bucketName,
-          Key: params.key,
+          Key: key,
         }));
         return { result: { success: true } };
 
