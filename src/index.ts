@@ -117,7 +117,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   try {
     switch (request.params.name) {
-      case ToolName.ListObjects:
+      case ToolName.ListObjects: {
         const { prefix } = request.params.arguments as { prefix?: string };
         const listCommand = new ListObjectsV2Command({
           Bucket: bucketName,
@@ -133,8 +133,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             })) || []
           }
         };
+      }
 
-      case ToolName.GetObject:
+      case ToolName.GetObject: {
         const { key, expiry } = request.params.arguments as { key: string; expiry?: number };
         const getCommand = new GetObjectCommand({
           Bucket: bucketName,
@@ -142,8 +143,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         });
         const url = await getSignedUrl(s3, getCommand, { expiresIn: expiry || 3600 });
         return { result: { object_url: url } };
+      }
 
-      case ToolName.PutObject:
+      case ToolName.PutObject: {
         const { key, expiry } = request.params.arguments as { key: string; expiry?: number };
         const putCommand = new PutObjectCommand({
           Bucket: bucketName,
@@ -151,15 +153,16 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
         });
         const putUrl = await getSignedUrl(s3, putCommand, { expiresIn: expiry || 3600 });
         return { result: { upload_url: putUrl } };
+      }
 
-      case ToolName.DeleteObject:
+      case ToolName.DeleteObject: {
         const { key } = request.params.arguments as { key: string };
         await s3.send(new DeleteObjectCommand({
           Bucket: bucketName,
           Key: key,
         }));
         return { result: { success: true } };
-
+      }
       default:
         throw new McpError(ErrorCode.MethodNotFound, "Method not found.");
     }
