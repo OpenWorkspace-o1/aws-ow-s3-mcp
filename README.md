@@ -48,7 +48,7 @@ Add the following to your `claude_desktop_config.json`:
 ```json
 {
   "mcpServers": {
-    "aws-ow-s3-mcp-server": {
+    "aws-ow-s3-mcp": {
       "command": "docker",
       "args": [
         "run",
@@ -62,7 +62,29 @@ Add the following to your `claude_desktop_config.json`:
         "AWS_ACCESS_KEY_ID",
         "-e",
         "AWS_SECRET_ACCESS_KEY",
-        "mcp/aws-ow-s3-mcp-server"
+        "mcp/aws-ow-s3-mcp"
+      ],
+      "env": {
+        "BUCKET_NAME": "<YOUR_BUCKET_NAME>",
+        "REGION": "<AWS_REGION>",
+        "AWS_ACCESS_KEY_ID": "<YOUR_ACCESS_KEY>",
+        "AWS_SECRET_ACCESS_KEY": "<YOUR_SECRET_KEY>"
+      }
+    }
+  }
+}
+```
+
+#### NPX Command
+
+```json
+{
+  "mcpServers": {
+    "aws-ow-s3-mcp": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-aws-ow-s3-mcp"
       ],
       "env": {
         "BUCKET_NAME": "<YOUR_BUCKET_NAME>",

@@ -1,11 +1,11 @@
 {
-    "name": "@openworkspace-o1/aws-ow-s3-mcp-server",
+    "name": "@openworkspace-o1/aws-ow-s3-mcp",
     "version": "0.1.0",
     "description": "OpenWorkspace-o1 AWS S3 MCP Server.",
     "private": true,
     "type": "module",
     "bin": {
-        "aws-ow-s3-mcp-server": "./build/index.js"
+        "aws-ow-s3-mcp": "./build/index.js"
     },
     "files": [
         "build"
