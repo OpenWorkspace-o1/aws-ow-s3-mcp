@@ -7,10 +7,13 @@
         "typeRoots": [
             "./node_modules/@types"
         ],
-        "outDir": "./build",
+        "outDir": "./dist",
         "rootDir": "./src",
+        "sourceMap": true
     },
     "extends": "@tsconfig/node22/tsconfig.json",
-    "include": ["src/**/*"],
+    "include": [
+      "./**/*.ts"
+    ],
     "exclude": ["node_modules"]
 }
