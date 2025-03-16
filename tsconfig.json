@@ -1,0 +1,16 @@
+{
+    "compilerOptions": {
+        "target": "ES2022",
+        "lib": [
+            "ES2022",
+        ],
+        "typeRoots": [
+            "./node_modules/@types"
+        ],
+        "outDir": "./build",
+        "rootDir": "./src",
+    },
+    "extends": "@tsconfig/node22/tsconfig.json",
+    "include": ["src/**/*"],
+    "exclude": ["node_modules"]
+}
