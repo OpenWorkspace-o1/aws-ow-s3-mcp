@@ -12,3 +12,4 @@ cdk.context.json
 .env
 .aider*
 package-lock.json
+dist/*
